@@ -3,11 +3,13 @@ use crate::instruction::Opcode;
 #[derive(Default)]
 pub struct VM {
     /// Array that simulates having hardware registers
-    pub(crate) registers: [i32; 32],
+    pub registers: [i32; 32],
     /// Program counter that tracks which byte is being executed
     pc: usize,
     /// The bytecode of the program being run
-    pub(crate) program: Vec<u8>,
+    pub program: Vec<u8>,
+    /// Used for heap memory
+    heap: Vec<u8>,
     /// Contains the remainder of modulo division ops
     remainder: usize,
     /// Contains the result of the last comparison operation
@@ -163,6 +165,12 @@ impl VM {
                 self.next_8_bits();
                 self.next_8_bits();
                 self.next_8_bits();
+            }
+            Opcode::ALOC => {
+                let register = self.next_8_bits() as usize;
+                let bytes = self.registers[register];
+                let new_end = self.heap.len() as i32 + bytes;
+                self.heap.resize(new_end as usize, 0);
             }
         }
 
@@ -392,5 +400,14 @@ mod tests {
         test_vm.program = vec![15, 0, 0, 0, 16, 0, 0, 0, 16, 0, 0, 0];
         test_vm.run_once();
         assert_eq!(test_vm.pc, 7);
+    }
+
+    #[test]
+    fn test_aloc_opcode() {
+        let mut test_vm = get_test_vm();
+        test_vm.registers[0] = 1024;
+        test_vm.program = vec![17, 0, 0, 0];
+        test_vm.run_once();
+        assert_eq!(test_vm.heap.len(), 1024);
     }
 }
