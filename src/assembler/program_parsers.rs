@@ -1,17 +1,19 @@
 use nom::types::CompleteStr;
 
-use crate::assembler::instruction_parsers::{AssemblerInstruction, instruction};
+use crate::assembler::instruction_parsers::{instruction, AssemblerInstruction};
+use crate::assembler::directive_parsers::directive;
+use crate::assembler::SymbolTable;
 
 #[derive(Debug, PartialEq)]
 pub struct Program {
-    instructions: Vec<AssemblerInstruction>
+    pub instructions: Vec<AssemblerInstruction>,
 }
 
 impl Program {
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes(&self, symbols: &SymbolTable) -> Vec<u8> {
         let mut program = vec![];
         for instruction in &self.instructions {
-            program.append(&mut instruction.to_bytes());
+            program.append(&mut instruction.to_bytes(symbols));
         }
         program
     }
@@ -19,7 +21,7 @@ impl Program {
 
 named!(pub program<CompleteStr, Program>,
     do_parse!(
-        instructions: many1!(instruction) >>
+        instructions: many1!(alt!(instruction | directive)) >>
         (
             Program {
                 instructions: instructions
@@ -38,10 +40,7 @@ mod tests {
         assert_eq!(result.is_ok(), true);
         let (leftover, p) = result.unwrap();
         assert_eq!(leftover, CompleteStr(""));
-        assert_eq!(
-            1,
-            p.instructions.len()
-        );
+        assert_eq!(1, p.instructions.len());
         // TODO: Figure out an ergonomic way to test the AssemblerInstruction returned
     }
 
@@ -50,7 +49,8 @@ mod tests {
         let result = program(CompleteStr("load $0 #100\n"));
         assert_eq!(result.is_ok(), true);
         let (_, program) = result.unwrap();
-        let bytecode = program.to_bytes();
+        let symbols = SymbolTable::new();
+        let bytecode = program.to_bytes(&symbols);
         assert_eq!(bytecode.len(), 4);
         println!("{:?}", bytecode);
     }

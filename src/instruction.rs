@@ -24,7 +24,8 @@ pub enum Opcode {
     ALOC,
     INC,
     DEC,
-    IGL,
+    DJMPE,
+    IGL
 }
 
 /// We implement this trait to make it easy to convert from a u8 to an Opcode
@@ -43,14 +44,15 @@ impl From<u8> for Opcode {
             9 => Opcode::EQ,
             10 => Opcode::NEQ,
             11 => Opcode::GTE,
-            12 => Opcode::GT,
-            13 => Opcode::LTE,
-            14 => Opcode::LT,
+            12 => Opcode::LTE,
+            13 => Opcode::LT,
+            14 => Opcode::GT,
             15 => Opcode::JMPE,
             16 => Opcode::NOP,
             17 => Opcode::ALOC,
             18 => Opcode::INC,
             19 => Opcode::DEC,
+            20 => Opcode::DJMPE,
             _ => Opcode::IGL,
         }
     }
@@ -79,23 +81,22 @@ impl<'a> From<CompleteStr<'a>> for Opcode {
             CompleteStr("aloc") => Opcode::ALOC,
             CompleteStr("inc") => Opcode::INC,
             CompleteStr("dec") => Opcode::DEC,
+            CompleteStr("djmpe") => Opcode::DJMPE,
             _ => Opcode::IGL,
         }
     }
 }
 
-
 /// Represents a combination of an opcode and operands for the VM to execute
 #[derive(Debug, PartialEq)]
 pub struct Instruction {
-    opcode: Opcode
+    opcode: Opcode,
 }
 
 impl Instruction {
+    /// Creates and returns a new Instruction
     pub fn new(opcode: Opcode) -> Instruction {
-        Instruction {
-            opcode
-        }
+        Instruction { opcode }
     }
 }
 
@@ -104,7 +105,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_create_htl() {
+    fn test_create_hlt() {
         let opcode = Opcode::HLT;
         assert_eq!(opcode, Opcode::HLT);
     }

@@ -5,17 +5,20 @@ use crate::assembler::Token;
 use crate::instruction::Opcode;
 
 named!(pub opcode<CompleteStr, Token>,
-    do_parse!(
-        opcode: alpha1 >>
-        (
-            Token::Op{code: Opcode::from(opcode)}
-        )
+  do_parse!(
+      opcode: alpha1 >>
+      (
+        Token::Op{code: Opcode::from(opcode)}
+      )
   )
 );
 
-#[cfg(test)]
 mod tests {
-    use super::*;
+    #![allow(unused_imports)]
+    use super::opcode;
+    use crate::assembler::Token;
+    use crate::instruction::Opcode;
+    use nom::types::CompleteStr;
 
     #[test]
     fn test_opcode() {
