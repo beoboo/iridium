@@ -76,11 +76,11 @@ impl VM {
             }
             Opcode::HLT => {
                 println!("HLT encountered");
-                return false;
+                return true;
             }
             Opcode::IGL => {
                 println!("Illegal instruction encountered");
-                return false;
+                return true;
             }
             Opcode::JMP => {
                 let target = self.registers[self.next_8_bits() as usize];
@@ -172,9 +172,21 @@ impl VM {
                 let new_end = self.heap.len() as i32 + bytes;
                 self.heap.resize(new_end as usize, 0);
             }
+            Opcode::INC => {
+                let register_number = self.next_8_bits() as usize;
+                self.registers[register_number] += 1;
+                self.next_8_bits();
+                self.next_8_bits();
+            }
+            Opcode::DEC => {
+                let register_number = self.next_8_bits() as usize;
+                self.registers[register_number] -= 1;
+                self.next_8_bits();
+                self.next_8_bits();
+            }
         }
 
-        true
+        false
     }
 
     /// Attempts to decode the byte the VM's program counter is pointing at into an opcode
