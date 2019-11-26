@@ -3,6 +3,9 @@ use nom::types::CompleteStr;
 use crate::assembler::program_parsers::{program, Program};
 use crate::instruction::Opcode;
 
+pub const PIE_HEADER_PREFIX: [u8; 4] = [45, 50, 49, 45];
+pub const PIE_HEADER_LENGTH: usize = 64;
+
 pub mod instruction_parsers;
 pub mod opcode_parsers;
 pub mod operand_parsers;
@@ -39,8 +42,14 @@ impl Assembler {
     pub fn assemble(&mut self, raw: &str) -> Option<Vec<u8>> {
         match program(CompleteStr(raw)) {
             Ok((_remainder, program)) => {
+                // First get the header so we can smush it into the bytecode letter
+                let mut assembled_program = self.write_pie_header();
                 self.process_first_phase(&program);
-                Some(self.process_second_phase(&program))
+                let mut body = self.process_second_phase(&program);
+
+                // Merge the header with the populated body vector
+                assembled_program.append(&mut body);
+                Some(assembled_program)
             }
             Err(e) => {
                 println!("There was an error assembling the code: {:?}", e);
@@ -78,6 +87,17 @@ impl Assembler {
             c += 4;
         }
     }
+
+    fn write_pie_header(&self) -> Vec<u8> {
+        let mut header = vec![];
+        for byte in PIE_HEADER_PREFIX.into_iter() {
+            header.push(byte.clone());
+        }
+        while header.len() < PIE_HEADER_LENGTH {
+            header.push(0 as u8);
+        }
+        header
+    }
 }
 
 #[derive(Debug)]
@@ -101,14 +121,6 @@ pub struct Symbol {
 
 impl Symbol {
     pub fn new(name: String, symbol_type: SymbolType, offset: u32) -> Symbol {
-        Symbol {
-            name,
-            symbol_type,
-            offset,
-        }
-    }
-
-    pub fn new_with_register(name: String, symbol_type: SymbolType, offset: u32, register: usize) -> Symbol {
         Symbol {
             name,
             symbol_type,
@@ -162,9 +174,9 @@ mod tests {
         let test_string = "load $0 #100\nload $1 #1\nload $2 #0\ntest: inc $0\nneq $0 $2\njmpe @test\nhlt";
         let program = asm.assemble(test_string).unwrap();
         let mut vm = VM::new();
-        assert_eq!(program.len(), 28);
+        assert_eq!(program.len(), 92);
         vm.add_bytes(program);
-        assert_eq!(vm.program.len(), 28);
+        assert_eq!(vm.program.len(), 92);
     }
 
     #[test]
