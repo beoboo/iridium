@@ -1,4 +1,5 @@
 extern crate byteorder;
+extern crate chrono;
 #[macro_use]
 extern crate clap;
 extern crate env_logger;
@@ -6,6 +7,7 @@ extern crate env_logger;
 extern crate log;
 #[macro_use]
 extern crate nom;
+extern crate uuid;
 
 use std::fs::File;
 use std::io::prelude::*;
@@ -35,7 +37,12 @@ fn main() {
             match program {
                 Ok(p) => {
                     vm.add_bytes(p);
-                    vm.run();
+                    let events = vm.run();
+                    println!("VM Events");
+                    println!("--------------------------");
+                    for event in &events {
+                        println!("{:#?}", event);
+                    };
                     std::process::exit(0);
                 }
                 Err(_e) => {}
