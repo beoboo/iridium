@@ -1,3 +1,11 @@
+use nom::types::CompleteStr;
+
+use crate::assembler::assembler_errors::AssemblerError;
+use crate::assembler::instruction_parsers::AssemblerInstruction;
+use crate::assembler::program_parsers::{program, Program};
+use crate::assembler::symbols::{Symbol, SymbolTable, SymbolType};
+use crate::instruction::Opcode;
+
 pub mod instruction_parsers;
 pub mod opcode_parsers;
 pub mod operand_parsers;
@@ -7,14 +15,6 @@ pub mod label_parsers;
 pub mod directive_parsers;
 pub mod assembler_errors;
 pub mod symbols;
-
-use nom::types::CompleteStr;
-
-use crate::instruction::Opcode;
-use crate::assembler::program_parsers::{program, Program};
-use crate::assembler::instruction_parsers::{AssemblerInstruction};
-use crate::assembler::assembler_errors::AssemblerError;
-use crate::assembler::symbols::{Symbol, SymbolTable, SymbolType};
 
 /// Magic number that begins every bytecode file prefix. These spell out EPIE in ASCII, if you were wondering.
 pub const PIE_HEADER_PREFIX: [u8; 4] = [45, 50, 49, 45];
@@ -309,8 +309,9 @@ impl<'a> From<&'a str> for AssemblerSection {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::vm::VM;
+
+    use super::*;
 
     #[test]
     /// Tests assembly a small but correct program

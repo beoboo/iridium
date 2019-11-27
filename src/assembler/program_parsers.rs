@@ -1,7 +1,7 @@
 use nom::types::CompleteStr;
 
-use crate::assembler::instruction_parsers::{instruction, AssemblerInstruction};
 use crate::assembler::directive_parsers::directive;
+use crate::assembler::instruction_parsers::{AssemblerInstruction, instruction};
 use crate::assembler::SymbolTable;
 
 #[derive(Debug, PartialEq)]

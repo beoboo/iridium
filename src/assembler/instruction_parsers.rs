@@ -1,9 +1,9 @@
 use nom::types::CompleteStr;
 
+use crate::assembler::{SymbolTable, Token};
+use crate::assembler::label_parsers::label_declaration;
 use crate::assembler::opcode_parsers::*;
 use crate::assembler::operand_parsers::operand;
-use crate::assembler::label_parsers::label_declaration;
-use crate::assembler::{Token, SymbolTable};
 
 #[derive(Debug, PartialEq)]
 pub struct AssemblerInstruction {
@@ -59,8 +59,8 @@ impl AssemblerInstruction {
     /// Checks if the AssemblyInstruction has any operands at all
     pub fn has_operands(&self) -> bool {
         self.operand1.is_some() ||
-        self.operand2.is_some() ||
-        self.operand3.is_some()
+            self.operand2.is_some() ||
+            self.operand3.is_some()
     }
 
     pub fn get_directive_name(&self) -> Option<String> {
@@ -95,12 +95,12 @@ impl AssemblerInstruction {
         match &self.label {
             Some(l) => {
                 match l {
-                    Token::LabelDeclaration{name} => {
+                    Token::LabelDeclaration { name } => {
                         Some(name.clone())
                     }
                     _ => None
                 }
-            },
+            }
             None => {
                 None
             }
@@ -169,8 +169,9 @@ named!(pub instruction<CompleteStr, AssemblerInstruction>,
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::instruction::Opcode;
+
+    use super::*;
 
     #[test]
     fn test_parse_instruction_form_one() {
@@ -185,7 +186,7 @@ mod tests {
                     directive: None,
                     operand1: Some(Token::Register { reg_num: 0 }),
                     operand2: Some(Token::IntegerOperand { value: 100 }),
-                    operand3: None
+                    operand3: None,
                 }
             ))
         );
@@ -204,7 +205,7 @@ mod tests {
                     directive: None,
                     operand1: Some(Token::Register { reg_num: 0 }),
                     operand2: Some(Token::LabelUsage { name: "test1".to_string() }),
-                    operand3: None
+                    operand3: None,
                 }
             ))
         );
@@ -223,7 +224,7 @@ mod tests {
                     directive: None,
                     operand1: None,
                     operand2: None,
-                    operand3: None
+                    operand3: None,
                 }
             ))
         );

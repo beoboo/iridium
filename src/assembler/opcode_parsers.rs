@@ -1,5 +1,5 @@
-use nom::types::CompleteStr;
 use nom::*;
+use nom::types::CompleteStr;
 
 use crate::assembler::Token;
 use crate::instruction::Opcode;
@@ -15,10 +15,13 @@ named!(pub opcode<CompleteStr, Token>,
 
 mod tests {
     #![allow(unused_imports)]
-    use super::opcode;
+
+    use nom::types::CompleteStr;
+
     use crate::assembler::Token;
     use crate::instruction::Opcode;
-    use nom::types::CompleteStr;
+
+    use super::opcode;
 
     #[test]
     fn test_opcode() {

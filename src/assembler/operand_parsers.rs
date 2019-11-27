@@ -1,9 +1,9 @@
 use nom::digit;
 use nom::types::CompleteStr;
 
-use crate::assembler::Token;
 use crate::assembler::label_parsers::label_usage;
 use crate::assembler::register_parsers::register;
+use crate::assembler::Token;
 
 /// Parser for all numbers, which have to be prefaced with `#` in our assembly language:
 /// #100
@@ -41,9 +41,11 @@ named!(pub operand<CompleteStr, Token>,
 
 mod tests {
     #![allow(unused_imports)]
-    use super::{integer_operand, irstring};
+
     use crate::assembler::Token;
     use crate::nom::types::CompleteStr;
+
+    use super::{integer_operand, irstring};
 
     #[test]
     fn test_parse_integer_operand() {

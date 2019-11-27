@@ -1,5 +1,5 @@
-use nom::types::CompleteStr;
 use nom::{alphanumeric, multispace};
+use nom::types::CompleteStr;
 
 use crate::assembler::Token;
 
@@ -54,5 +54,4 @@ mod tests {
         let result = label_usage(CompleteStr("test"));
         assert_eq!(result.is_ok(), false);
     }
-
 }

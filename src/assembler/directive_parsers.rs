@@ -2,8 +2,8 @@ use nom::alpha1;
 use nom::types::CompleteStr;
 
 use crate::assembler::instruction_parsers::AssemblerInstruction;
-use crate::assembler::operand_parsers::operand;
 use crate::assembler::label_parsers::label_declaration;
+use crate::assembler::operand_parsers::operand;
 use crate::assembler::Token;
 
 named!(directive_declaration<CompleteStr, Token>,
@@ -52,6 +52,7 @@ named!(pub directive<CompleteStr, AssemblerInstruction>,
 
 mod tests {
     #![allow(unused_imports)]
+
     use nom::types::CompleteStr;
 
     use crate::assembler::instruction_parsers::AssemblerInstruction;

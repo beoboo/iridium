@@ -26,7 +26,7 @@ pub enum Opcode {
     DEC,
     DJMPE,
     IGL,
-    PRTS
+    PRTS,
 }
 
 /// We implement this trait to make it easy to convert from a u8 to an Opcode
