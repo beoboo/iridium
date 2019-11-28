@@ -44,10 +44,12 @@ fn main() {
                         println!("{:#?}", event);
                     };
                     std::process::exit(0);
+                },
+                Err(_e) => {
+
                 }
-                Err(_e) => {}
             }
-        }
+        },
         None => {
             start_repl();
         }
