@@ -1,3 +1,14 @@
+pub mod assembler_errors;
+pub mod directive_parsers;
+pub mod instruction_parsers;
+pub mod label_parsers;
+pub mod opcode_parsers;
+pub mod operand_parsers;
+pub mod program_parsers;
+pub mod register_parsers;
+pub mod symbols;
+
+use byteorder::{LittleEndian, WriteBytesExt};
 use nom::types::CompleteStr;
 
 use crate::assembler::assembler_errors::AssemblerError;
@@ -5,16 +16,6 @@ use crate::assembler::instruction_parsers::AssemblerInstruction;
 use crate::assembler::program_parsers::{program, Program};
 use crate::assembler::symbols::{Symbol, SymbolTable, SymbolType};
 use crate::instruction::Opcode;
-
-pub mod instruction_parsers;
-pub mod opcode_parsers;
-pub mod operand_parsers;
-pub mod program_parsers;
-pub mod register_parsers;
-pub mod label_parsers;
-pub mod directive_parsers;
-pub mod assembler_errors;
-pub mod symbols;
 
 /// Magic number that begins every bytecode file prefix. These spell out EPIE in ASCII, if you were wondering.
 pub const PIE_HEADER_PREFIX: [u8; 4] = [45, 50, 49, 45];
@@ -33,7 +34,6 @@ pub enum Token {
     Directive { name: String },
     IrString { name: String },
 }
-
 
 #[derive(Debug, Default)]
 pub struct Assembler {
@@ -75,9 +75,6 @@ impl Assembler {
     pub fn assemble(&mut self, raw: &str) -> Result<Vec<u8>, Vec<AssemblerError>> {
         match program(CompleteStr(raw)) {
             Ok((_remainder, program)) => {
-                // First get the header so we can smush it into the bytecode letter
-                let mut assembled_program = self.write_pie_header();
-
                 // Start processing the AssembledInstructions
                 self.process_first_phase(&program);
                 if !self.errors.is_empty() {
@@ -96,6 +93,9 @@ impl Assembler {
                 // Run the second pass, which translates opcodes and associated operands into the bytecode
                 let mut body = self.process_second_phase(&program);
 
+                // Get the header so we can smush it into the bytecode letter
+                let mut assembled_program = self.write_pie_header();
+
                 // Merge the header with the populated body vector
                 assembled_program.append(&mut body);
                 Ok(assembled_program)
@@ -103,7 +103,9 @@ impl Assembler {
             // If there were parsing errors, bad syntax, etc, this arm is run
             Err(e) => {
                 println!("There was an error parsing the code: {:?}", e);
-                Err(vec![AssemblerError::ParseError { error: e.to_string() }])
+                Err(vec![AssemblerError::ParseError {
+                    error: e.to_string(),
+                }])
             }
         }
     }
@@ -119,7 +121,9 @@ impl Assembler {
                     self.process_label_declaration(&i);
                 } else {
                     // If we have *not* hit a segment header yet, then we have a label outside of a segment, which is not allowed
-                    self.errors.push(AssemblerError::NoSegmentDeclarationFound { instruction: self.current_instruction });
+                    self.errors.push(AssemblerError::NoSegmentDeclarationFound {
+                        instruction: self.current_instruction,
+                    });
                 }
             }
 
@@ -157,9 +161,12 @@ impl Assembler {
     fn process_label_declaration(&mut self, i: &AssemblerInstruction) {
         // Check if the label is None or String
         let name = match i.get_label_name() {
-            Some(name) => { name }
+            Some(name) => name,
             None => {
-                self.errors.push(AssemblerError::StringConstantDeclaredWithoutLabel { instruction: self.current_instruction });
+                self.errors
+                    .push(AssemblerError::StringConstantDeclaredWithoutLabel {
+                        instruction: self.current_instruction,
+                    });
                 return;
             }
         };
@@ -179,9 +186,7 @@ impl Assembler {
     fn process_directive(&mut self, i: &AssemblerInstruction) {
         // First let's make sure we have a parseable name
         let directive_name = match i.get_directive_name() {
-            Some(name) => {
-                name
-            }
+            Some(name) => name,
             None => {
                 println!("Directive has an invalid name: {:?}", i);
                 return;
@@ -196,7 +201,9 @@ impl Assembler {
                     self.handle_asciiz(i);
                 }
                 _ => {
-                    self.errors.push(AssemblerError::UnknownDirectiveFound { directive: directive_name.clone() });
+                    self.errors.push(AssemblerError::UnknownDirectiveFound {
+                        directive: directive_name.clone(),
+                    });
                     return;
                 }
             }
@@ -209,13 +216,17 @@ impl Assembler {
     /// hello: .asciiz 'Hello!'
     fn handle_asciiz(&mut self, i: &AssemblerInstruction) {
         // Being a constant declaration, this is only meaningful in the first pass
-        if self.phase != AssemblerPhase::First { return; }
+        if self.phase != AssemblerPhase::First {
+            return;
+        }
 
         // In this case, operand1 will have the entire string we need to read in to RO memory
         match i.get_string_constant() {
             Some(s) => {
                 match i.get_label_name() {
-                    Some(name) => { self.symbols.set_symbol_offset(&name, self.ro_offset); }
+                    Some(name) => {
+                        self.symbols.set_symbol_offset(&name, self.ro_offset);
+                    }
                     None => {
                         // This would be someone typing:
                         // .asciiz 'Hello'
@@ -245,7 +256,10 @@ impl Assembler {
         let new_section: AssemblerSection = header_name.into();
         // Only specific section names are allowed
         if new_section == AssemblerSection::Unknown {
-            println!("Found an section header that is unknown: {:#?}", header_name);
+            println!(
+                "Found an section header that is unknown: {:#?}",
+                header_name
+            );
             return;
         }
         // TODO: Check if we really need to keep a list of all sections seen
@@ -259,9 +273,17 @@ impl Assembler {
         for byte in &PIE_HEADER_PREFIX {
             header.push(byte.clone());
         }
+
+        // Now we need to calculate the starting offset so that the VM knows where the RO section ends
+        let mut wtr: Vec<u8> = vec![];
+        wtr.write_u32::<LittleEndian>(self.ro.len() as u32).unwrap();
+        header.append(&mut wtr);
+
+        // Now pad the rest of the bytecode header
         while header.len() < PIE_HEADER_LENGTH {
             header.push(0 as u8);
         }
+
         header
     }
 }
@@ -294,15 +316,13 @@ impl Default for AssemblerSection {
 impl<'a> From<&'a str> for AssemblerSection {
     fn from(name: &str) -> AssemblerSection {
         match name {
-            "data" => {
-                AssemblerSection::Data { starting_instruction: None }
-            }
-            "code" => {
-                AssemblerSection::Code { starting_instruction: None }
-            }
-            _ => {
-                AssemblerSection::Unknown
-            }
+            "data" => AssemblerSection::Data {
+                starting_instruction: None,
+            },
+            "code" => AssemblerSection::Code {
+                starting_instruction: None,
+            },
+            _ => AssemblerSection::Unknown,
         }
     }
 }
@@ -323,6 +343,17 @@ mod tests {
         assert_eq!(program.len(), 92);
         vm.add_bytes(program);
         assert_eq!(vm.program.len(), 92);
+    }
+
+    #[test]
+    /// Simple test of data that goes into the read only section
+    fn test_code_start_offset_written() {
+        let mut asm = Assembler::new();
+        let test_string = ".data\ntest1: .asciiz 'Hello'\n.code\nload $0 #100\nload $1 #1\nload $2 #0\ntest: inc $0\nneq $0 $2\njmpe @test\nhlt";
+        let program = asm.assemble(test_string);
+        assert_eq!(program.is_ok(), true);
+        let unwrapped = program.unwrap();
+        assert_eq!(unwrapped[4], 6);
     }
 
     #[test]

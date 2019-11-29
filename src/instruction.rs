@@ -55,7 +55,7 @@ impl From<u8> for Opcode {
             19 => Opcode::DEC,
             20 => Opcode::DJMPE,
             21 => Opcode::PRTS,
-            _ => Opcode::IGL
+            _ => Opcode::IGL,
         }
     }
 }

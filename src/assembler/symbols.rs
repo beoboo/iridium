@@ -33,14 +33,12 @@ pub enum SymbolType {
 /// Holds all of the symbols
 #[derive(Debug, Clone, Default)]
 pub struct SymbolTable {
-    pub symbols: Vec<Symbol>
+    pub symbols: Vec<Symbol>,
 }
 
 impl SymbolTable {
     pub fn new() -> SymbolTable {
-        SymbolTable {
-            symbols: vec![]
-        }
+        SymbolTable { symbols: vec![] }
     }
 
     pub fn add_symbol(&mut self, s: Symbol) {

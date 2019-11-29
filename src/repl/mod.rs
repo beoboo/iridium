@@ -1,10 +1,10 @@
 pub mod command_parser;
 
 use std;
-use std::io;
-use std::io::Write;
-use std::io::prelude::*;
 use std::fs::File;
+use std::io;
+use std::io::prelude::*;
+use std::io::Write;
 use std::num::ParseIntError;
 use std::path::Path;
 
@@ -23,7 +23,7 @@ pub struct REPL {
     command_buffer: Vec<String>,
     vm: VM,
     asm: Assembler,
-    scheduler: Scheduler
+    scheduler: Scheduler,
 }
 
 impl REPL {
@@ -33,7 +33,7 @@ impl REPL {
             vm: VM::new(),
             command_buffer: vec![],
             asm: Assembler::new(),
-            scheduler: Scheduler::new()
+            scheduler: Scheduler::new(),
         }
     }
 
@@ -62,19 +62,19 @@ impl REPL {
             let historical_copy = buffer.clone();
             self.command_buffer.push(historical_copy);
 
-            if buffer.starts_with("!") {
+            if buffer.starts_with(COMMAND_PREFIX) {
                 self.execute_command(&buffer);
             } else {
                 let program = match program(CompleteStr(&buffer)) {
-                    Ok((_remainder, program)) => {
-                        program
-                    },
+                    Ok((_remainder, program)) => program,
                     Err(e) => {
                         println!("Unable to parse input: {:?}", e);
                         continue;
                     }
                 };
-                self.vm.program.append(&mut program.to_bytes(&self.asm.symbols));
+                self.vm
+                    .program
+                    .append(&mut program.to_bytes(&self.asm.symbols));
                 self.vm.run_once();
             }
         }
@@ -86,13 +86,15 @@ impl REPL {
         io::stdout().flush().expect("Unable to flush stdout");
         let mut tmp = String::new();
 
-        stdin.read_line(&mut tmp).expect("Unable to read line from user");
+        stdin
+            .read_line(&mut tmp)
+            .expect("Unable to read line from user");
         println!("Attempting to load program from file...");
 
         let tmp = tmp.trim();
         let filename = Path::new(&tmp);
         let mut f = match File::open(&filename) {
-            Ok(f) => { f }
+            Ok(f) => f,
             Err(e) => {
                 println!("There was an error opening that file: {:?}", e);
                 return None;
@@ -100,9 +102,7 @@ impl REPL {
         };
         let mut contents = String::new();
         match f.read_to_string(&mut contents) {
-            Ok(_bytes_read) => {
-                Some(contents)
-            }
+            Ok(_bytes_read) => Some(contents),
             Err(e) => {
                 println!("there was an error reading that file: {:?}", e);
                 None
@@ -142,22 +142,22 @@ impl REPL {
             "!symbols" => self.symbols(&args[1..]),
             "!load_file" => self.load_file(&args[1..]),
             "!spawn" => self.spawn(&args[1..]),
-            _ => { println!("Invalid command!") }
+            _ => println!("Invalid command!"),
         };
     }
 
-    fn quit(&mut self, args: &[&str]) {
+    fn quit(&mut self, _args: &[&str]) {
         println!("Farewell! Have a great day!");
         std::process::exit(0);
     }
 
-    fn history(&mut self, args: &[&str]) {
+    fn history(&mut self, _args: &[&str]) {
         for command in &self.command_buffer {
             println!("{}", command);
         }
     }
 
-    fn program(&mut self, args: &[&str]) {
+    fn program(&mut self, _args: &[&str]) {
         println!("Listing instructions currently in VM's program vector:");
         for instruction in &self.vm.program {
             println!("{}", instruction);
@@ -165,11 +165,11 @@ impl REPL {
         println!("End of Program Listing");
     }
 
-    fn clear_program(&mut self, args: &[&str]) {
+    fn clear_program(&mut self, _args: &[&str]) {
         self.vm.program.clear();
     }
 
-    fn clear_registers(&mut self, args: &[&str]) {
+    fn clear_registers(&mut self, _args: &[&str]) {
         println!("Setting all registers to 0");
         for i in 0..self.vm.registers.len() {
             self.vm.registers[i] = 0;
@@ -177,19 +177,19 @@ impl REPL {
         println!("Done!");
     }
 
-    fn registers(&mut self, args: &[&str]) {
+    fn registers(&mut self, _args: &[&str]) {
         println!("Listing registers and all contents:");
         println!("{:#?}", self.vm.registers);
         println!("End of Register Listing")
     }
 
-    fn symbols(&mut self, args: &[&str]) {
+    fn symbols(&mut self, _args: &[&str]) {
         println!("Listing symbols table:");
         println!("{:#?}", self.asm.symbols);
         println!("End of Symbols Listing");
     }
 
-    fn load_file(&mut self, args: &[&str]) {
+    fn load_file(&mut self, _args: &[&str]) {
         let contents = self.get_data_from_load();
         if let Some(contents) = contents {
             match self.asm.assemble(&contents) {
@@ -198,7 +198,7 @@ impl REPL {
                     self.vm.program.append(&mut assembled_program);
                     println!("{:#?}", self.vm.program);
                     self.vm.run();
-                },
+                }
                 Err(errors) => {
                     for error in errors {
                         println!("Unable to parse input: {}", error);
@@ -211,7 +211,7 @@ impl REPL {
         }
     }
 
-    fn spawn(&mut self, args: &[&str]) {
+    fn spawn(&mut self, _args: &[&str]) {
         let contents = self.get_data_from_load();
         println!("Loaded contents: {:#?}", contents);
         if let Some(contents) = contents {
@@ -221,7 +221,7 @@ impl REPL {
                     self.vm.program.append(&mut assembled_program);
                     println!("{:#?}", self.vm.program);
                     self.scheduler.get_thread(self.vm.clone());
-                },
+                }
                 Err(errors) => {
                     for error in errors {
                         println!("Unable to parse input: {}", error);

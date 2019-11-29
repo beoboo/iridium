@@ -15,10 +15,10 @@ pub enum AssemblerError {
 impl fmt::Display for AssemblerError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            AssemblerError::NoSegmentDeclarationFound { instruction } => {
+            AssemblerError::NoSegmentDeclarationFound{ instruction } => {
                 f.write_str(&format!("No segment declaration (e.g., .code, .data) prior to finding an opcode or other directive. Instruction # was {}:", instruction))
             }
-            AssemblerError::StringConstantDeclaredWithoutLabel { instruction } => {
+            AssemblerError::StringConstantDeclaredWithoutLabel{ instruction } => {
                 f.write_str(&format!("Found a string constant without a corresponding label. Instruction # was {}: ", instruction))
             }
             AssemblerError::SymbolAlreadyDeclared => {
@@ -33,7 +33,7 @@ impl fmt::Display for AssemblerError {
             AssemblerError::InsufficientSections => {
                 f.write_str("Less than two sections/segments were found in the code")
             }
-            AssemblerError::ParseError { ref error } => {
+            AssemblerError::ParseError{ ref error } => {
                 f.write_str(&format!("There was an error parsing the code: {}", error))
             }
         }
@@ -43,16 +43,16 @@ impl fmt::Display for AssemblerError {
 impl Error for AssemblerError {
     fn description(&self) -> &str {
         match self {
-            AssemblerError::NoSegmentDeclarationFound { .. } => {
+            AssemblerError::NoSegmentDeclarationFound{ .. } => {
                 "No segment declaration (e.g., .code, .data) prior to finding an opcode or other directive."
             }
-            AssemblerError::StringConstantDeclaredWithoutLabel { .. } => {
+            AssemblerError::StringConstantDeclaredWithoutLabel{ .. } => {
                 "Found a string constant without a corresponding label."
             }
             AssemblerError::SymbolAlreadyDeclared => {
                 "This symbol was previously declared."
             }
-            AssemblerError::UnknownDirectiveFound { .. } => {
+            AssemblerError::UnknownDirectiveFound{ .. } => {
                 "Invalid or unknown directive found."
             }
             AssemblerError::NonOpcodeInOpcodeField => {
@@ -61,7 +61,7 @@ impl Error for AssemblerError {
             AssemblerError::InsufficientSections => {
                 "Less than two sections/segments were found in the code"
             }
-            AssemblerError::ParseError { .. } => {
+            AssemblerError::ParseError{ .. } => {
                 "There was an error parsing the code"
             }
         }
